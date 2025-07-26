@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Phone, Globe, Github, Linkedin, MapPin, Calendar, GraduationCap } from "lucide-react";
+import { Mail, Phone, Globe, Github, Linkedin, MapPin, Calendar, GraduationCap, Briefcase, Code, Award, Target, ExternalLink } from "lucide-react";
 
 interface PersonalInfo {
   fullName: string;
@@ -10,6 +10,42 @@ interface PersonalInfo {
   github: string;
   portfolio: string;
   photo?: string;
+}
+
+interface ProfessionalObjective {
+  summary: string;
+}
+
+interface WorkExperience {
+  id: string;
+  jobTitle: string;
+  company: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  responsibilities: string[];
+  current: boolean;
+}
+
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  technologies: string[];
+  startDate: string;
+  endDate: string;
+  githubUrl?: string;
+  liveUrl?: string;
+  role: string;
+}
+
+interface Certification {
+  id: string;
+  title: string;
+  organization: string;
+  dateObtained: string;
+  expiryDate?: string;
+  credentialId?: string;
 }
 
 interface Education {
@@ -31,11 +67,25 @@ interface Skill {
 
 interface ResumePreviewProps {
   personalInfo: PersonalInfo;
+  professionalObjective?: ProfessionalObjective;
+  workExperience?: WorkExperience[];
+  projects?: Project[];
   education: Education[];
   skills: Skill[];
+  certifications?: Certification[];
+  selectedTemplate?: string;
 }
 
-export const ResumePreview = ({ personalInfo, education, skills }: ResumePreviewProps) => {
+export const ResumePreview = ({ 
+  personalInfo, 
+  professionalObjective, 
+  workExperience = [], 
+  projects = [], 
+  education, 
+  skills, 
+  certifications = [], 
+  selectedTemplate = "modern" 
+}: ResumePreviewProps) => {
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -107,6 +157,106 @@ export const ResumePreview = ({ personalInfo, education, skills }: ResumePreview
         </div>
 
         <div className="p-8 space-y-8">
+          {/* Professional Objective Section */}
+          {professionalObjective?.summary && (
+            <section>
+              <h2 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Professional Objective
+              </h2>
+              <p className="text-foreground leading-relaxed">{professionalObjective.summary}</p>
+            </section>
+          )}
+
+          {/* Work Experience Section */}
+          {workExperience.length > 0 && (
+            <section>
+              <h2 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                <Briefcase className="h-5 w-5" />
+                Work Experience
+              </h2>
+              <div className="space-y-6">
+                {workExperience.map((exp) => (
+                  <div key={exp.id} className="border-l-4 border-primary pl-4">
+                    <h3 className="font-semibold text-lg">{exp.jobTitle}</h3>
+                    <p className="text-primary font-medium">{exp.company}</p>
+                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mt-1 mb-3">
+                      {exp.location && (
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          <span>{exp.location}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>
+                          {formatDate(exp.startDate)} - {exp.current ? "Present" : formatDate(exp.endDate)}
+                        </span>
+                      </div>
+                    </div>
+                    {exp.responsibilities.length > 0 && (
+                      <ul className="list-disc list-inside space-y-1 text-sm">
+                        {exp.responsibilities.map((resp, index) => (
+                          <li key={index} className="text-foreground">{resp}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Projects Section */}
+          {projects.length > 0 && (
+            <section>
+              <h2 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                <Code className="h-5 w-5" />
+                Projects
+              </h2>
+              <div className="space-y-6">
+                {projects.map((project) => (
+                  <div key={project.id} className="border-l-4 border-primary pl-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold text-lg">{project.title}</h3>
+                      <div className="flex gap-2">
+                        {project.githubUrl && (
+                          <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-dark">
+                            <Github className="h-4 w-4" />
+                          </a>
+                        )}
+                        {project.liveUrl && (
+                          <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-dark">
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    {project.role && (
+                      <p className="text-primary font-medium mb-2">{project.role}</p>
+                    )}
+                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mt-1 mb-3">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>{formatDate(project.startDate)} - {formatDate(project.endDate)}</span>
+                      </div>
+                    </div>
+                    <p className="text-foreground text-sm mb-3">{project.description}</p>
+                    {project.technologies.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {project.technologies.map((tech, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {tech}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Education Section */}
           {education.length > 0 && (
             <section>
@@ -172,12 +322,40 @@ export const ResumePreview = ({ personalInfo, education, skills }: ResumePreview
             </section>
           )}
 
-          {/* Placeholder sections for future features */}
-          <section className="border-t pt-6">
-            <div className="text-center text-muted-foreground">
-              <p className="text-sm">More sections (Projects, Experience, Certifications) coming soon!</p>
-            </div>
-          </section>
+          {/* Certifications Section */}
+          {certifications.length > 0 && (
+            <section>
+              <h2 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                <Award className="h-5 w-5" />
+                Certifications
+              </h2>
+              <div className="space-y-4">
+                {certifications.map((cert) => (
+                  <div key={cert.id} className="border-l-4 border-primary pl-4">
+                    <h3 className="font-semibold text-lg">{cert.title}</h3>
+                    <p className="text-primary font-medium">{cert.organization}</p>
+                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mt-1">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>Obtained: {formatDate(cert.dateObtained)}</span>
+                      </div>
+                      {cert.expiryDate && (
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          <span>Expires: {formatDate(cert.expiryDate)}</span>
+                        </div>
+                      )}
+                      {cert.credentialId && (
+                        <div>
+                          <span className="font-medium">ID: {cert.credentialId}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
 
         {/* Footer */}
