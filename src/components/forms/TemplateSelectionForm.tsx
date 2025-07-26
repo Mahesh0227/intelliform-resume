@@ -77,18 +77,15 @@ export const TemplateSelectionForm = ({ selectedTemplate, onUpdate, onNext, onBa
                       <Check className="h-4 w-4" />
                     </div>
                   )}
-                  
                   {/* Template Preview */}
-                  <div className={`h-32 rounded-lg mb-4 ${template.preview} flex items-center justify-center`}>
-                    <div className="text-center">
+                  <div className={`h-32 rounded-lg mb-4 ${template.preview} flex items-center justify-center text-center`}>
+                    <div>
                       <div className="text-sm font-bold">Your Name</div>
-                      <div className="text-xs opacity-75">Preview Layout</div>
+                      <div className="text-xs opacity-75">{template.name}</div>
                     </div>
                   </div>
-                  
                   <h3 className="font-semibold text-lg mb-2">{template.name}</h3>
                   <p className="text-sm text-muted-foreground mb-3">{template.description}</p>
-                  
                   <div className="flex flex-wrap gap-1">
                     {template.features.map((feature, index) => (
                       <Badge key={index} variant="secondary" className="text-xs">

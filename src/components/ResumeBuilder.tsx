@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Header } from "./Header";
 import { StepIndicator } from "./StepIndicator";
 import { PersonalInfoForm } from "./forms/PersonalInfoForm";
@@ -13,6 +13,8 @@ import { ResumePreview } from "./ResumePreview";
 import { Button } from "./ui/button";
 import { Download, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import html2pdf from "html2pdf.js";
+import { generateDocx } from "../utils/generateDocx";
 
 interface PersonalInfo {
   fullName: string;
@@ -81,7 +83,8 @@ export const ResumeBuilder = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
-  
+  const resumeRef = useRef<HTMLDivElement>(null);
+
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({
     fullName: "",
     email: "",
@@ -90,10 +93,8 @@ export const ResumeBuilder = () => {
     github: "",
     portfolio: ""
   });
-  
-  const [professionalObjective, setProfessionalObjective] = useState<ProfessionalObjective>({
-    summary: ""
-  });
+
+  const [professionalObjective, setProfessionalObjective] = useState<ProfessionalObjective>({ summary: "" });
   const [workExperience, setWorkExperience] = useState<WorkExperience[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [certifications, setCertifications] = useState<Certification[]>([]);
@@ -114,116 +115,83 @@ export const ResumeBuilder = () => {
   ];
 
   const handleExportPDF = () => {
-    toast({
-      title: "PDF Export",
-      description: "PDF export feature coming soon!",
+    if (resumeRef.current) {
+      html2pdf()
+        .set({
+          margin: 0,
+          filename: `${personalInfo.fullName.replace(/\s+/g, "_")}_Resume.pdf`,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+        })
+        .from(resumeRef.current)
+        .save()
+        .catch(() => {
+          toast({
+            title: "Export Failed",
+            description: "There was a problem exporting your resume.",
+          });
+        });
+    }
+  };
+
+  const handleExportDOCX = () => {
+    generateDocx({
+      personalInfo,
+      professionalObjective,
+      workExperience,
+      projects,
+      education,
+      skills,
+      certifications
     });
   };
 
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 1:
-        return (
-          <PersonalInfoForm
-            data={personalInfo}
-            onUpdate={setPersonalInfo}
-            onNext={() => setCurrentStep(2)}
-          />
-        );
+        return <PersonalInfoForm data={personalInfo} onUpdate={setPersonalInfo} onNext={() => setCurrentStep(2)} />;
       case 2:
-        return (
-          <ProfessionalObjectiveForm
-            data={professionalObjective}
-            onUpdate={setProfessionalObjective}
-            onNext={() => setCurrentStep(3)}
-            onBack={() => setCurrentStep(1)}
-          />
-        );
+        return <ProfessionalObjectiveForm data={professionalObjective} onUpdate={setProfessionalObjective} onNext={() => setCurrentStep(3)} onBack={() => setCurrentStep(1)} />;
       case 3:
-        return (
-          <WorkExperienceForm
-            data={workExperience}
-            onUpdate={setWorkExperience}
-            onNext={() => setCurrentStep(4)}
-            onBack={() => setCurrentStep(2)}
-          />
-        );
+        return <WorkExperienceForm data={workExperience} onUpdate={setWorkExperience} onNext={() => setCurrentStep(4)} onBack={() => setCurrentStep(2)} />;
       case 4:
-        return (
-          <ProjectsForm
-            data={projects}
-            onUpdate={setProjects}
-            onNext={() => setCurrentStep(5)}
-            onBack={() => setCurrentStep(3)}
-          />
-        );
+        return <ProjectsForm data={projects} onUpdate={setProjects} onNext={() => setCurrentStep(5)} onBack={() => setCurrentStep(3)} />;
       case 5:
-        return (
-          <EducationForm
-            data={education}
-            onUpdate={setEducation}
-            onNext={() => setCurrentStep(6)}
-            onBack={() => setCurrentStep(4)}
-          />
-        );
+        return <EducationForm data={education} onUpdate={setEducation} onNext={() => setCurrentStep(6)} onBack={() => setCurrentStep(4)} />;
       case 6:
-        return (
-          <SkillsForm
-            data={skills}
-            onUpdate={setSkills}
-            onNext={() => setCurrentStep(7)}
-            onBack={() => setCurrentStep(5)}
-          />
-        );
+        return <SkillsForm data={skills} onUpdate={setSkills} onNext={() => setCurrentStep(7)} onBack={() => setCurrentStep(5)} />;
       case 7:
-        return (
-          <CertificationsForm
-            data={certifications}
-            onUpdate={setCertifications}
-            onNext={() => setCurrentStep(8)}
-            onBack={() => setCurrentStep(6)}
-          />
-        );
+        return <CertificationsForm data={certifications} onUpdate={setCertifications} onNext={() => setCurrentStep(8)} onBack={() => setCurrentStep(6)} />;
       case 8:
-        return (
-          <TemplateSelectionForm
-            selectedTemplate={selectedTemplate}
-            onUpdate={setSelectedTemplate}
-            onNext={() => setCurrentStep(9)}
-            onBack={() => setCurrentStep(7)}
-          />
-        );
+        return <TemplateSelectionForm selectedTemplate={selectedTemplate} onUpdate={setSelectedTemplate} onNext={() => setCurrentStep(9)} onBack={() => setCurrentStep(7)} />;
       case 9:
         return (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Resume Preview</h2>
               <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentStep(8)}
-                >
-                  Edit Resume
+                <Button variant="outline" onClick={() => setCurrentStep(8)}>Edit Resume</Button>
+                <Button variant="brand" onClick={handleExportPDF}>
+                  <Download className="h-4 w-4 mr-2" /> Export PDF
                 </Button>
-                <Button
-                  variant="brand"
-                  onClick={handleExportPDF}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export PDF
+                <Button variant="secondary" onClick={handleExportDOCX}>
+                  <Download className="h-4 w-4 mr-2" /> Export DOCX
                 </Button>
               </div>
             </div>
-            <ResumePreview
-              personalInfo={personalInfo}
-              professionalObjective={professionalObjective}
-              workExperience={workExperience}
-              projects={projects}
-              education={education}
-              skills={skills}
-              certifications={certifications}
-              selectedTemplate={selectedTemplate}
-            />
+            <div ref={resumeRef}>
+              <ResumePreview
+                personalInfo={personalInfo}
+                professionalObjective={professionalObjective}
+                workExperience={workExperience}
+                projects={projects}
+                education={education}
+                skills={skills}
+                certifications={certifications}
+                selectedTemplate={selectedTemplate}
+              />
+            </div>
           </div>
         );
       default:
@@ -234,9 +202,7 @@ export const ResumeBuilder = () => {
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <Header />
-      
       <div className="container mx-auto px-4 py-8">
-        {/* Mobile Preview Toggle */}
         <div className="md:hidden mb-6">
           <Button
             variant="outline"
@@ -247,19 +213,15 @@ export const ResumeBuilder = () => {
             {showPreview ? "Hide Preview" : "Show Preview"}
           </Button>
         </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Form Section */}
           <div className={`space-y-8 ${showPreview ? "hidden md:block" : ""}`}>
             {currentStep < 9 && <StepIndicator steps={steps} />}
             {renderCurrentStep()}
           </div>
-
-          {/* Preview Section */}
           <div className={`${!showPreview ? "hidden md:block" : ""}`}>
             <div className="sticky top-8">
               <h2 className="text-xl font-semibold mb-4 text-center">Live Preview</h2>
-              <div className="max-h-[80vh] overflow-y-auto">
+              <div className="max-h-[80vh] overflow-y-auto" ref={resumeRef}>
                 <ResumePreview
                   personalInfo={personalInfo}
                   professionalObjective={professionalObjective}
